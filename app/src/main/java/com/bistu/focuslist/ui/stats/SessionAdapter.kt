@@ -31,7 +31,7 @@ class SessionAdapter : ListAdapter<FocusSession, SessionAdapter.SessionViewHolde
         val ctx = holder.itemView.context
         with(holder.binding) {
             textSessionTitle.text = session.taskTitle.ifBlank { "自由专注" }
-            textSessionTime.text = TimeUtils.formatDateTime(session.startTime)
+            textSessionTime.text = TimeUtils.formatDateTime(session.endTime)
             textSessionDuration.text = ctx.getString(R.string.minutes_fmt, session.durationMinutes)
             textSessionStatus.visibility = if (session.completed) View.GONE else View.VISIBLE
         }

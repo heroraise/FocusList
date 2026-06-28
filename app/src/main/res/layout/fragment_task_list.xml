@@ -2,7 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_app_gradient">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,24 +15,24 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="8dp">
+            android:paddingStart="20dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="8dp">
 
             <TextView
+                style="@style/ScreenTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/my_tasks"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnSurface" />
+                android:text="@string/my_tasks" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnClearCompleted"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:minHeight="40dp"
                 android:text="@string/clear_completed"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -41,6 +42,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
+            android:paddingTop="4dp"
             android:paddingBottom="96dp"
             android:scrollbars="vertical" />
     </LinearLayout>
@@ -51,6 +53,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
+        android:background="@drawable/bg_panel"
+        android:lineSpacingExtra="3dp"
         android:padding="24dp"
         android:text="@string/empty_tasks"
         android:textColor="?attr/colorOnSurfaceVariant"
@@ -61,8 +65,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_margin="20dp"
         android:contentDescription="@string/add_task"
+        app:backgroundTint="?attr/colorSecondaryContainer"
+        app:tint="?attr/colorOnSecondaryContainer"
         app:srcCompat="@drawable/ic_add" />
 
 </FrameLayout>

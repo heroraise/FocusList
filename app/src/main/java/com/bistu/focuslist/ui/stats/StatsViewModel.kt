@@ -15,11 +15,18 @@ class StatsViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repo = Repository.get(app)
     private val startOfToday = TimeUtils.startOfToday()
+    private val startOfRecentSessions = TimeUtils.startOfRecentDays(RECENT_SESSION_DAYS)
 
     val todayMinutes: LiveData<Int> = repo.observeTodayMinutes(startOfToday)
     val todayCount: LiveData<Int> = repo.observeTodayCount(startOfToday)
     val totalMinutes: LiveData<Int> = repo.observeTotalMinutes()
     val totalCount: LiveData<Int> = repo.observeTotalCount()
     val pendingCount: LiveData<Int> = repo.observePendingCount()
-    val recentSessions: LiveData<List<FocusSession>> = repo.observeRecentSessions(30)
+    val recentSessions: LiveData<List<FocusSession>> =
+        repo.observeRecentSessionsSince(startOfRecentSessions, RECENT_SESSION_LIMIT)
+
+    companion object {
+        private const val RECENT_SESSION_DAYS = 7
+        private const val RECENT_SESSION_LIMIT = 30
+    }
 }

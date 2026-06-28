@@ -1,28 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 主题主色：沉静的青绿色，契合“专注”主题 -->
-    <color name="primary">#FF2E7D6F</color>
-    <color name="primary_dark">#FF1F5950</color>
-    <color name="primary_light">#FF7FC8BC</color>
-    <color name="accent">#FFE8A33D</color>
+    <!-- 主题主色：安静的深青，搭配克制琥珀强调，契合“专注”主题 -->
+    <color name="primary">#FF246A5F</color>
+    <color name="primary_dark">#FF17463F</color>
+    <color name="primary_light">#FFA8D8CF</color>
+    <color name="primary_container">#FFDDF3EE</color>
+    <color name="accent">#FFD99535</color>
+    <color name="accent_container">#FFFFE7BD</color>
 
-    <color name="bg">#FFF5F7F6</color>
-    <color name="surface">#FFFFFFFF</color>
-    <color name="surface_variant">#FFEDF2F0</color>
+    <color name="bg">#FFF3F6F1</color>
+    <color name="bg_end">#FFE9F0EB</color>
+    <color name="surface">#FFFBFCF8</color>
+    <color name="surface_variant">#FFE5EDE7</color>
+    <color name="surface_elevated">#FFFFFFFF</color>
+    <color name="outline">#FFD5E0D9</color>
 
-    <color name="text_primary">#FF1B2422</color>
-    <color name="text_secondary">#FF66736F</color>
+    <color name="text_primary">#FF18241F</color>
+    <color name="text_secondary">#FF65736D</color>
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
 
     <!-- 优先级 -->
-    <color name="priority_low">#FF8BC34A</color>
-    <color name="priority_normal">#FF42A5F5</color>
-    <color name="priority_high">#FFEF5350</color>
+    <color name="priority_low">#FF6FA65D</color>
+    <color name="priority_normal">#FF3F7CA6</color>
+    <color name="priority_high">#FFD95757</color>
 
     <!-- 深色 -->
-    <color name="bg_night">#FF12211E</color>
+    <color name="bg_night">#FF101B18</color>
+    <color name="bg_end_night">#FF152622</color>
     <color name="surface_night">#FF1B2C28</color>
+    <color name="surface_variant_night">#FF273A35</color>
+    <color name="outline_night">#FF334A44</color>
     <color name="text_primary_night">#FFEAF2F0</color>
     <color name="text_secondary_night">#FFA7B5B1</color>
 </resources>

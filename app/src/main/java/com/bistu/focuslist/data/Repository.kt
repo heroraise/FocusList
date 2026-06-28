@@ -29,6 +29,9 @@ class Repository private constructor(context: Context) {
     fun observeRecentSessions(limit: Int = 20): LiveData<List<FocusSession>> =
         sessionDao.observeRecent(limit)
 
+    fun observeRecentSessionsSince(since: Long, limit: Int = 30): LiveData<List<FocusSession>> =
+        sessionDao.observeRecentSince(since, limit)
+
     fun observeTodayMinutes(startOfDay: Long): LiveData<Int> =
         sessionDao.observeTotalMinutesSince(startOfDay)
 

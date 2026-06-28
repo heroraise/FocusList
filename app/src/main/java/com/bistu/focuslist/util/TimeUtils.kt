@@ -21,6 +21,17 @@ object TimeUtils {
         return c.timeInMillis
     }
 
+    /** 最近 days 天的起点（包含今天），例如 7 天表示从 6 天前 0 点开始。 */
+    fun startOfRecentDays(days: Int): Long {
+        val c = Calendar.getInstance()
+        c.set(Calendar.HOUR_OF_DAY, 0)
+        c.set(Calendar.MINUTE, 0)
+        c.set(Calendar.SECOND, 0)
+        c.set(Calendar.MILLISECOND, 0)
+        c.add(Calendar.DAY_OF_YEAR, -(days.coerceAtLeast(1) - 1))
+        return c.timeInMillis
+    }
+
     fun formatDateTime(millis: Long): String = dateTimeFmt.format(Date(millis))
 
     fun formatTime(millis: Long): String = timeFmt.format(Date(millis))
