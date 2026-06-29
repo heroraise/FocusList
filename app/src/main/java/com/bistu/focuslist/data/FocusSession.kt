@@ -28,5 +28,17 @@ data class FocusSession(
     val endTime: Long,
 
     /** 是否完整完成（true=自然结束，false=中途放弃） */
-    val completed: Boolean = true
+    val completed: Boolean = true,
+
+    /** 专注结束后的心情复盘，如“顺利”“一般”“分心” */
+    val reviewMood: String = "",
+
+    /** 打断原因，如“手机消息”“环境干扰”“任务太难” */
+    val interruptionReason: String = "",
+
+    /** 用户补充的复盘备注 */
+    val reviewNotes: String = "",
+
+    /** 本次专注模式，如 25/5、50/10、自定义 */
+    val focusMode: String = "自定义"
 )

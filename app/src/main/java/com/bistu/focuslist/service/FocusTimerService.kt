@@ -20,6 +20,7 @@ import com.bistu.focuslist.R
 import com.bistu.focuslist.data.FocusSession
 import com.bistu.focuslist.data.Repository
 import com.bistu.focuslist.ui.MainActivity
+import com.bistu.focuslist.ui.review.FocusReviewActivity
 import com.bistu.focuslist.util.NotificationHelper
 import com.bistu.focuslist.util.Prefs
 import com.bistu.focuslist.util.SoundManager
@@ -52,6 +53,8 @@ class FocusTimerService : Service() {
     private var taskId: Long? = null
     private var taskTitle: String = ""
     private var startTimeMillis = 0L
+    private var mode: String = MODE_FOCUS
+    private var focusModeLabel: String = "自定义"
 
     private var ambientPlayer: MediaPlayer? = null
 
@@ -88,6 +91,8 @@ class FocusTimerService : Service() {
     private fun handleStart(intent: Intent) {
         val minutes = intent.getIntExtra(EXTRA_MINUTES, Prefs.DEFAULT_FOCUS_MINUTES)
         val id = intent.getLongExtra(EXTRA_TASK_ID, -1L)
+        mode = intent.getStringExtra(EXTRA_MODE) ?: MODE_FOCUS
+        focusModeLabel = intent.getStringExtra(EXTRA_FOCUS_MODE_LABEL) ?: "自定义"
         taskId = if (id < 0) null else id
         taskTitle = intent.getStringExtra(EXTRA_TASK_TITLE) ?: ""
         totalSeconds = minutes * 60
@@ -97,7 +102,7 @@ class FocusTimerService : Service() {
         startTimeMillis = System.currentTimeMillis()
 
         startForegroundCompat(buildNotification())
-        startAmbientIfNeeded()
+        if (mode == MODE_FOCUS) startAmbientIfNeeded() else stopAmbient()
         publish()
 
         handler.removeCallbacks(ticker)
@@ -115,13 +120,13 @@ class FocusTimerService : Service() {
     private fun handleResume() {
         if (!running || !paused) return
         paused = false
-        startAmbientIfNeeded()
+        if (mode == MODE_FOCUS) startAmbientIfNeeded()
         publish()
         updateNotification()
     }
 
     private fun handleStop(userCancelled: Boolean) {
-        if (running) {
+        if (running && mode == MODE_FOCUS) {
             recordSession(completed = !userCancelled)
         }
         finishAndStop()
@@ -129,11 +134,14 @@ class FocusTimerService : Service() {
 
     /** 倒计时自然归零 */
     private fun onFinished() {
-        recordSession(completed = true)
-        incrementTaskPomodoro()
         SoundManager.playChime(this)
         SoundManager.vibrate(this)
-        showCompletionNotification()
+        if (mode == MODE_FOCUS) {
+            recordSession(completed = true, showReviewNotification = true)
+            incrementTaskPomodoro()
+        } else {
+            showBreakCompletionNotification()
+        }
         finishAndStop()
     }
 
@@ -142,6 +150,8 @@ class FocusTimerService : Service() {
         stopAmbient()
         running = false
         paused = false
+        mode = MODE_FOCUS
+        focusModeLabel = "自定义"
         remainingSeconds = 0
         totalSeconds = 0
         publish()
@@ -151,7 +161,7 @@ class FocusTimerService : Service() {
 
     // ---------------- 数据记录 ----------------
 
-    private fun recordSession(completed: Boolean) {
+    private fun recordSession(completed: Boolean, showReviewNotification: Boolean = false) {
         val elapsed = (totalSeconds - remainingSeconds).coerceAtLeast(0)
         val minutes = elapsed / 60
         if (minutes <= 0 && !completed) return // 放弃且不足一分钟则不记录
@@ -161,11 +171,15 @@ class FocusTimerService : Service() {
             durationMinutes = if (completed) totalSeconds / 60 else minutes,
             startTime = startTimeMillis,
             endTime = System.currentTimeMillis(),
-            completed = completed
+            completed = completed,
+            focusMode = focusModeLabel
         )
         ioScope.launch {
-            Repository.get(applicationContext).insertSession(session)
+            val sessionId = Repository.get(applicationContext).insertSession(session)
             TaskWidgetProvider.notifyRefresh(applicationContext)
+            if (showReviewNotification) {
+                showCompletionNotification(sessionId)
+            }
         }
     }
 
@@ -218,10 +232,16 @@ class FocusTimerService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val title = if (paused) "专注已暂停" else "专注进行中"
+        val title = when {
+            paused && mode == MODE_FOCUS -> "专注已暂停"
+            paused -> "休息已暂停"
+            mode == MODE_FOCUS -> "专注进行中"
+            mode == MODE_SHORT_BREAK -> "短休息进行中"
+            else -> "长休息进行中"
+        }
         val text = buildString {
             append(TimeUtils.formatMmSs(remainingSeconds))
-            if (taskTitle.isNotBlank()) append("  ·  ").append(taskTitle)
+            if (mode == MODE_FOCUS && taskTitle.isNotBlank()) append("  ·  ").append(taskTitle)
         }
 
         val builder = NotificationCompat.Builder(this, NotificationHelper.CHANNEL_FOCUS)
@@ -248,9 +268,9 @@ class FocusTimerService : Service() {
             ?.notify(NOTIF_ID, buildNotification())
     }
 
-    private fun showCompletionNotification() {
-        val openIntent = Intent(this, MainActivity::class.java).apply {
-            putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_FOCUS)
+    private fun showCompletionNotification(sessionId: Long) {
+        val openIntent = Intent(this, FocusReviewActivity::class.java).apply {
+            putExtra(FocusReviewActivity.EXTRA_SESSION_ID, sessionId)
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         val pi = PendingIntent.getActivity(
@@ -272,6 +292,27 @@ class FocusTimerService : Service() {
             .build()
         ContextCompat.getSystemService(this, NotificationManager::class.java)
             ?.notify(NOTIF_ID + 1, notification)
+    }
+
+    private fun showBreakCompletionNotification() {
+        val openIntent = Intent(this, MainActivity::class.java).apply {
+            putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_FOCUS)
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pi = PendingIntent.getActivity(
+            this, 105, openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val title = if (mode == MODE_LONG_BREAK) "长休息结束" else "短休息结束"
+        val notification = NotificationCompat.Builder(this, NotificationHelper.CHANNEL_REMINDER)
+            .setSmallIcon(R.drawable.ic_stat_focus)
+            .setContentTitle(title)
+            .setContentText("休息结束，准备进入下一段专注吧。")
+            .setAutoCancel(true)
+            .setContentIntent(pi)
+            .build()
+        ContextCompat.getSystemService(this, NotificationManager::class.java)
+            ?.notify(NOTIF_ID + 2, notification)
     }
 
     private fun servicePendingIntent(action: String, requestCode: Int): PendingIntent {
@@ -306,7 +347,8 @@ class FocusTimerService : Service() {
             totalSeconds = totalSeconds,
             remainingSeconds = remainingSeconds,
             taskTitle = taskTitle,
-            taskId = taskId
+            taskId = taskId,
+            mode = mode
         )
     }
 
@@ -327,6 +369,12 @@ class FocusTimerService : Service() {
         const val EXTRA_MINUTES = "extra_minutes"
         const val EXTRA_TASK_ID = "extra_task_id"
         const val EXTRA_TASK_TITLE = "extra_task_title"
+        const val EXTRA_MODE = "extra_mode"
+        const val EXTRA_FOCUS_MODE_LABEL = "extra_focus_mode_label"
+
+        const val MODE_FOCUS = "focus"
+        const val MODE_SHORT_BREAK = "short_break"
+        const val MODE_LONG_BREAK = "long_break"
 
         private val _state = MutableLiveData(FocusUiState())
 
@@ -334,12 +382,32 @@ class FocusTimerService : Service() {
         val state: LiveData<FocusUiState> = _state
 
         /** 启动一次专注（前台服务） */
-        fun startFocus(context: Context, minutes: Int, taskId: Long?, taskTitle: String) {
+        fun startFocus(
+            context: Context,
+            minutes: Int,
+            taskId: Long?,
+            taskTitle: String,
+            focusModeLabel: String = "自定义"
+        ) {
             val intent = Intent(context, FocusTimerService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_MINUTES, minutes)
                 putExtra(EXTRA_TASK_ID, taskId ?: -1L)
                 putExtra(EXTRA_TASK_TITLE, taskTitle)
+                putExtra(EXTRA_MODE, MODE_FOCUS)
+                putExtra(EXTRA_FOCUS_MODE_LABEL, focusModeLabel)
+            }
+            ContextCompat.startForegroundService(context, intent)
+        }
+
+        fun startBreak(context: Context, minutes: Int, longBreak: Boolean) {
+            val intent = Intent(context, FocusTimerService::class.java).apply {
+                action = ACTION_START
+                putExtra(EXTRA_MINUTES, minutes)
+                putExtra(EXTRA_TASK_ID, -1L)
+                putExtra(EXTRA_TASK_TITLE, "")
+                putExtra(EXTRA_MODE, if (longBreak) MODE_LONG_BREAK else MODE_SHORT_BREAK)
+                putExtra(EXTRA_FOCUS_MODE_LABEL, if (longBreak) "长休息" else "短休息")
             }
             ContextCompat.startForegroundService(context, intent)
         }

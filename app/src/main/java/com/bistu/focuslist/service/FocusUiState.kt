@@ -15,5 +15,7 @@ data class FocusUiState(
     /** 关联任务标题 */
     val taskTitle: String = "",
     /** 关联任务 id */
-    val taskId: Long? = null
+    val taskId: Long? = null,
+    /** 当前计时类型：专注 / 短休息 / 长休息 */
+    val mode: String = FocusTimerService.MODE_FOCUS
 )

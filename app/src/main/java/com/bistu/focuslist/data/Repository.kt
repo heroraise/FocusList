@@ -51,7 +51,9 @@ class Repository private constructor(context: Context) {
     fun observeTotalCount(): LiveData<Int> =
         sessionDao.observeCountSince(0L)
 
+    suspend fun getSession(id: Long): FocusSession? = sessionDao.getById(id)
     suspend fun insertSession(session: FocusSession): Long = sessionDao.insert(session)
+    suspend fun updateSession(session: FocusSession) = sessionDao.update(session)
 
     companion object {
         @Volatile

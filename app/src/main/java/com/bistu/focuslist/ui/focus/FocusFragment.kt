@@ -27,6 +27,7 @@ class FocusFragment : Fragment() {
 
     private val viewModel: FocusViewModel by viewModels()
     private var pendingTasks: List<Task> = emptyList()
+    private var focusModeLabel = "自定义"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,6 +46,7 @@ class FocusFragment : Fragment() {
         binding.sliderDuration.value = defaultMinutes.toFloat().coerceIn(5f, 60f)
         binding.sliderDuration.addOnChangeListener { _, value, _ ->
             if (FocusTimerService.state.value?.running != true) {
+                focusModeLabel = getString(R.string.preset_custom)
                 updateIdlePreview(value.toInt())
             }
         }
@@ -56,7 +58,25 @@ class FocusFragment : Fragment() {
             val minutes = binding.sliderDuration.value.toInt()
             Prefs.setFocusMinutes(requireContext(), minutes)
             val (taskId, taskTitle) = selectedTask()
-            FocusTimerService.startFocus(requireContext(), minutes, taskId, taskTitle)
+            FocusTimerService.startFocus(
+                requireContext(),
+                minutes,
+                taskId,
+                taskTitle,
+                focusModeLabel
+            )
+        }
+        binding.btnPresetPomodoro.setOnClickListener {
+            applyPreset(minutes = 25, label = getString(R.string.preset_pomodoro))
+        }
+        binding.btnPresetDeep.setOnClickListener {
+            applyPreset(minutes = 50, label = getString(R.string.preset_deep))
+        }
+        binding.btnShortBreak.setOnClickListener {
+            FocusTimerService.startBreak(requireContext(), minutes = 5, longBreak = false)
+        }
+        binding.btnLongBreak.setOnClickListener {
+            FocusTimerService.startBreak(requireContext(), minutes = 15, longBreak = true)
         }
         binding.btnPause.setOnClickListener {
             FocusTimerService.sendAction(requireContext(), FocusTimerService.ACTION_PAUSE)
@@ -95,13 +115,20 @@ class FocusFragment : Fragment() {
             binding.progressRing.max = state.totalSeconds.coerceAtLeast(1)
             binding.progressRing.setProgressCompat(state.remainingSeconds, true)
             binding.textTime.text = TimeUtils.formatMmSs(state.remainingSeconds)
-            binding.textFocusTask.text =
-                state.taskTitle.ifBlank { getString(R.string.free_focus) }
+            binding.textFocusTask.text = when (state.mode) {
+                FocusTimerService.MODE_SHORT_BREAK -> getString(R.string.short_break)
+                FocusTimerService.MODE_LONG_BREAK -> getString(R.string.long_break)
+                else -> state.taskTitle.ifBlank { getString(R.string.free_focus) }
+            }
 
             binding.btnPause.visibility = if (state.paused) View.GONE else View.VISIBLE
             binding.btnResume.visibility = if (state.paused) View.VISIBLE else View.GONE
-            binding.textStatusHint.text =
-                if (state.paused) getString(R.string.focus_paused) else getString(R.string.focus_running)
+            binding.textStatusHint.text = when {
+                state.paused -> getString(R.string.focus_paused)
+                state.mode == FocusTimerService.MODE_SHORT_BREAK ||
+                    state.mode == FocusTimerService.MODE_LONG_BREAK -> getString(R.string.break_running)
+                else -> getString(R.string.focus_running)
+            }
         } else {
             binding.layoutIdle.visibility = View.VISIBLE
             binding.layoutRunning.visibility = View.GONE
@@ -116,6 +143,12 @@ class FocusFragment : Fragment() {
         binding.progressRing.setProgressCompat(totalSec, false)
         binding.textTime.text = TimeUtils.formatMmSs(totalSec)
         binding.textFocusTask.text = getString(R.string.minutes_focus_fmt, minutes)
+    }
+
+    private fun applyPreset(minutes: Int, label: String) {
+        binding.sliderDuration.value = minutes.toFloat().coerceIn(5f, 60f)
+        focusModeLabel = label
+        updateIdlePreview(minutes)
     }
 
     private fun setSpinnerItems(items: List<String>) {

@@ -57,12 +57,33 @@
     <string name="btn_pause">暂停</string>
     <string name="btn_resume">继续</string>
     <string name="btn_stop">结束</string>
+    <string name="preset_pomodoro">标准 25分钟</string>
+    <string name="preset_deep">深度 50分钟</string>
+    <string name="preset_custom">自定义</string>
+    <string name="short_break">短休息 5分钟</string>
+    <string name="long_break">长休息 15分钟</string>
     <string name="minutes_focus_fmt">%1$d 分钟专注</string>
     <string name="focus_running">保持专注，你正在前进 ✨</string>
     <string name="focus_paused">已暂停，准备好后继续</string>
+    <string name="break_running">正在休息，恢复精力后再出发</string>
     <string name="focus_idle_hint">选择时长，点击开始一段专注时间</string>
     <string name="daily_quote">每日一言</string>
     <string name="refresh">换一句</string>
+
+    <!-- 专注复盘 -->
+    <string name="focus_review">专注复盘</string>
+    <string name="review_summary_fmt">任务：%1$s\n时长：%2$d 分钟\n模式：%3$s\n完成时间：%4$s</string>
+    <string name="review_mood">本次状态</string>
+    <string name="review_reason">打断原因</string>
+    <string name="review_notes">复盘备注</string>
+    <string name="save_review">保存复盘</string>
+    <string name="review_mood_good">顺利完成</string>
+    <string name="review_mood_normal">状态一般</string>
+    <string name="review_mood_distracted">有些分心</string>
+    <string name="review_reason_none">没有明显打断</string>
+    <string name="review_reason_phone">手机消息</string>
+    <string name="review_reason_environment">环境干扰</string>
+    <string name="review_reason_difficult">任务太难</string>
 
     <!-- 统计页 -->
     <string name="stat_today_minutes">今日专注(分钟)</string>

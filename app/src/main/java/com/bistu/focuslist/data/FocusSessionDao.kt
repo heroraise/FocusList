@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 /** 专注记录 DAO。 */
 @Dao
@@ -11,6 +12,12 @@ interface FocusSessionDao {
 
     @Insert
     suspend fun insert(session: FocusSession): Long
+
+    @Update
+    suspend fun update(session: FocusSession)
+
+    @Query("SELECT * FROM focus_sessions WHERE id = :id")
+    suspend fun getById(id: Long): FocusSession?
 
     @Query("SELECT * FROM focus_sessions ORDER BY endTime DESC, id DESC LIMIT :limit")
     fun observeRecent(limit: Int): LiveData<List<FocusSession>>
