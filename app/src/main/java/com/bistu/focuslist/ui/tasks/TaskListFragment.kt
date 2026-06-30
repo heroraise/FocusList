@@ -2,6 +2,8 @@ package com.bistu.focuslist.ui.tasks
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,7 +22,7 @@ import com.google.android.material.snackbar.Snackbar
 
 /**
  * 待办列表页面。
- * 展示任务、勾选完成、滑动删除（可撤销）、点击编辑、一键开始专注。
+ * 展示任务、搜索筛选、勾选完成、滑动删除（可撤销）、点击编辑、一键开始专注。
  */
 class TaskListFragment : Fragment() {
 
@@ -46,6 +48,7 @@ class TaskListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
+        setupSearchAndFilter()
 
         binding.fabAdd.setOnClickListener {
             addEditLauncher.launch(Intent(requireContext(), AddEditTaskActivity::class.java))
@@ -59,6 +62,56 @@ class TaskListFragment : Fragment() {
             adapter.submitList(list)
             binding.emptyView.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
         }
+    }
+
+    private fun setupSearchAndFilter() {
+        binding.editSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                viewModel.setSearchQuery(s?.toString().orEmpty())
+            }
+        })
+
+        binding.btnFilter.setOnClickListener {
+            val showFilters = binding.layoutFilters.visibility != View.VISIBLE
+            binding.layoutFilters.visibility = if (showFilters) View.VISIBLE else View.GONE
+            if (!showFilters) clearFilterSelection()
+        }
+
+        binding.chipGroupCategory.setOnCheckedStateChangeListener { group, _ ->
+            viewModel.setFilterCategory(
+                when (group.checkedChipId) {
+                    R.id.chipCatStudy -> getString(R.string.cat_study)
+                    R.id.chipCatWork -> getString(R.string.cat_work)
+                    R.id.chipCatLife -> getString(R.string.cat_life)
+                    R.id.chipCatOther -> getString(R.string.cat_other)
+                    else -> ""
+                }
+            )
+        }
+
+        binding.chipGroupPriority.setOnCheckedStateChangeListener { group, _ ->
+            viewModel.setFilterPriority(
+                when (group.checkedChipId) {
+                    R.id.chipPriorityHigh -> 2
+                    R.id.chipPriorityNormal -> 1
+                    R.id.chipPriorityLow -> 0
+                    else -> -1
+                }
+            )
+        }
+
+        binding.chipDueOnly.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setFilterDueOnly(isChecked)
+        }
+    }
+
+    private fun clearFilterSelection() {
+        binding.chipGroupCategory.check(R.id.chipCatAll)
+        binding.chipGroupPriority.check(R.id.chipPriorityAll)
+        binding.chipDueOnly.isChecked = false
+        viewModel.clearFilterOptions()
     }
 
     private fun setupRecyclerView() {

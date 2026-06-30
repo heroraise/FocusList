@@ -23,6 +23,11 @@
     <string name="task_deleted">已删除任务</string>
     <string name="start_focus">专注</string>
     <string name="pomodoro_count_fmt">🍅 %1$d</string>
+    <string name="search">搜索</string>
+    <string name="search_hint">搜索任务标题或备注</string>
+    <string name="filter">筛选</string>
+    <string name="filter_all">全部</string>
+    <string name="filter_due_only">有截止</string>
 
     <!-- 添加 / 编辑 -->
     <string name="add_task">添加任务</string>
