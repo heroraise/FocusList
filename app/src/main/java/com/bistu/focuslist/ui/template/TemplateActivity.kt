@@ -30,14 +30,25 @@ class TemplateActivity : AppCompatActivity() {
         binding.recyclerTemplates.layoutManager = LinearLayoutManager(this)
         binding.recyclerTemplates.adapter = adapter
 
+        // 下拉刷新
+        binding.swipeRefresh.setOnRefreshListener { viewModel.refresh() }
+
         binding.btnRetry.setOnClickListener { viewModel.refresh() }
 
         viewModel.uiState.observe(this) { render(it) }
+
+        // 观察正在导入的 id 集合，更新 Adapter 状态
+        viewModel.importingIds.observe(this) { ids ->
+            adapter.updateImportingIds(ids)
+        }
     }
 
     private fun render(state: TemplateUiState) {
         binding.progress.visibility = if (state.isLoading) View.VISIBLE else View.GONE
         binding.btnRetry.isEnabled = !state.isLoading
+        // SwipeRefresh 的刷新指示器与 isLoading 保持一致
+        binding.swipeRefresh.isRefreshing = state.isLoading
+
         adapter.submitList(state.templates)
         binding.textStatus.text = if (state.fromNetwork) {
             getString(R.string.template_source_online)
@@ -45,7 +56,9 @@ class TemplateActivity : AppCompatActivity() {
             getString(R.string.template_source_local)
         }
         if (state.message.isNotBlank()) {
-            Snackbar.make(binding.root, state.message, Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(binding.root, state.message, Snackbar.LENGTH_LONG)
+                .setAction("重试") { viewModel.refresh() }
+                .show()
         }
     }
 

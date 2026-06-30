@@ -12,6 +12,14 @@ class TemplateAdapter(
     private val onImport: (StudyTemplate) -> Unit
 ) : ListAdapter<StudyTemplate, TemplateAdapter.TemplateViewHolder>(Diff) {
 
+    // 当前正在导入的模板 id 集合
+    private var importingIds: Set<String> = emptySet()
+
+    fun updateImportingIds(ids: Set<String>) {
+        importingIds = ids
+        notifyDataSetChanged()
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TemplateViewHolder {
         val binding = ItemTemplateBinding.inflate(
             LayoutInflater.from(parent.context),
@@ -34,7 +42,17 @@ class TemplateAdapter(
             textMeta.text = "${template.category} · ${template.estimatedDays} 天 · ${template.tasks.size} 项"
             textSource.text = template.source
             textDescription.text = template.description
-            btnImport.setOnClickListener { onImport(template) }
+
+            val importing = importingIds.contains(template.id)
+            // 显示不同文本并禁用按钮以提示导入中状态
+            btnImport.text = if (importing) {
+                "${btnImport.context.getString(com.bistu.focuslist.R.string.import_template)}..."
+            } else {
+                btnImport.context.getString(com.bistu.focuslist.R.string.import_template)
+            }
+            btnImport.isEnabled = !importing
+
+            btnImport.setOnClickListener { if (!importing) onImport(template) }
         }
     }
 

@@ -16,6 +16,10 @@ class TemplateViewModel(app: Application) : AndroidViewModel(app) {
     private val _uiState = MutableLiveData(TemplateUiState(isLoading = true))
     val uiState: LiveData<TemplateUiState> = _uiState
 
+    // 正在导入的模板 id 集合，用于在 UI 上显示导入中状态
+    private val _importingIds = MutableLiveData<Set<String>>(emptySet())
+    val importingIds: LiveData<Set<String>> = _importingIds
+
     init {
         refresh()
     }
@@ -34,11 +38,23 @@ class TemplateViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun importTemplate(template: StudyTemplate) {
+        // 标记为正在导入
+        _importingIds.value = _importingIds.value.orEmpty() + template.id
+
         viewModelScope.launch {
-            val count = repo.importTemplate(template)
-            _uiState.value = _uiState.value.orEmpty().copy(
-                message = "已导入 $count 个任务"
-            )
+            try {
+                val count = repo.importTemplate(template)
+                _uiState.value = _uiState.value.orEmpty().copy(
+                    message = "已导入 $count 个任务"
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.orEmpty().copy(
+                    message = "导入失败: ${e.message ?: "未知错误"}"
+                )
+            } finally {
+                // 移除导入中标记
+                _importingIds.value = _importingIds.value.orEmpty() - template.id
+            }
         }
     }
 
