@@ -15,7 +15,7 @@ class StudyTemplateRepository private constructor(context: Context) {
 
     suspend fun loadTemplates(): TemplateLoadResult {
         return try {
-            val remote = TemplateClient.api.getTemplates().templates
+            val remote = TemplateClient.getTemplates().templates
                 .filter { it.title.isNotBlank() && it.tasks.isNotEmpty() }
                 .map { it.copy(source = it.source.ifBlank { SOURCE_REMOTE }) }
             if (remote.isNotEmpty()) {

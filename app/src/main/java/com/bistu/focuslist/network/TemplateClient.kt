@@ -10,15 +10,29 @@ import okhttp3.OkHttpClient
  */
 object TemplateClient {
 
-    private const val BASE_URL =
+    private const val MAIN_BASE_URL =
         "https://raw.githubusercontent.com/lgydhei/FocusList/main/app/src/main/assets/"
+    private const val PREVIEW_BASE_URL =
+        "https://raw.githubusercontent.com/lgydhei/FocusList/codex/fix-network-config/app/src/main/assets/"
 
     private val okHttp: OkHttpClient by lazy {
         createJsonOkHttpClient(timeoutSeconds = 6)
     }
 
     val api: TemplateApi by lazy {
-        createTemplateApi(BASE_URL)
+        createTemplateApi(MAIN_BASE_URL, okHttp)
+    }
+
+    private val previewApi: TemplateApi by lazy {
+        createTemplateApi(PREVIEW_BASE_URL, okHttp)
+    }
+
+    suspend fun getTemplates(): TemplateResponse {
+        return try {
+            api.getTemplates()
+        } catch (_: Exception) {
+            previewApi.getTemplates()
+        }
     }
 
     internal fun createTemplateApi(
